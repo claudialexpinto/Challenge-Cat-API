@@ -14,12 +14,14 @@ import Foundation
 public struct CatListFeature: Reducer {
     
     // MARK: - State
+    @ObservableState
     public struct State: Equatable {
         public var cats: [Cat] = []
         public var currentPage: Int = 1
         public var isLoading: Bool = false
         public var canLoadMore: Bool = true
-        public var alert: AlertState<Action>? = nil
+        @Presents public var alert: AlertState<Action>?
+        public init() {}
     }
     
     // MARK: - Action
@@ -29,6 +31,7 @@ public struct CatListFeature: Reducer {
         case catsResponse([Cat])
         case failedToLoad(String)
         case errorDismissed
+        case alert(PresentationAction<CatListFeature.Action>)
     }
     
     // MARK: - Environment
@@ -48,15 +51,15 @@ public struct CatListFeature: Reducer {
     public var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
-                
+
             case .onAppear:
                 state.cats = environment.persistenceController.fetchCats()
                 state.isLoading = true
-                
+
                 let page = state.currentPage
                 let api = environment.apiClient
                 let persistence = environment.persistenceController
-                
+
                 return .run { send in
                     do {
                         let cats = try await api.fetchCats(page: page, limit: 20)
@@ -66,15 +69,15 @@ public struct CatListFeature: Reducer {
                         await send(.failedToLoad(error.localizedDescription))
                     }
                 }
-                
+
             case .loadMore:
                 guard state.canLoadMore, !state.isLoading else { return .none }
                 state.isLoading = true
-                
+
                 let nextPage = state.currentPage
                 let api = environment.apiClient
                 let persistence = environment.persistenceController
-                
+
                 return .run { send in
                     do {
                         let cats = try await api.fetchCats(page: nextPage, limit: 20)
@@ -84,7 +87,7 @@ public struct CatListFeature: Reducer {
                         await send(.failedToLoad(error.localizedDescription))
                     }
                 }
-                
+
             case let .catsResponse(cats):
                 state.isLoading = false
                 if state.currentPage == 1 {
@@ -95,19 +98,26 @@ public struct CatListFeature: Reducer {
                 state.currentPage += 1
                 state.canLoadMore = !cats.isEmpty
                 return .none
-                
+
             case let .failedToLoad(message):
                 state.isLoading = false
-                state.alert = AlertState<CatListFeature.Action>(
+                state.alert = AlertState(
                     title: { TextState("Error") },
                     actions: {
                         ButtonState(action: .send(.errorDismissed), label: { TextState("OK") })
                     },
-                    message: {TextState(message)})
+                    message: { TextState(message) }
+                )
+                return .none
+
+            case .alert(.presented(.errorDismissed)):
+                state.alert = nil
+                return .none
+
+            case .alert(.dismiss):
                 return .none
                 
-            case .errorDismissed:
-                state.alert = nil
+            default:
                 return .none
             }
         }
