@@ -6,15 +6,22 @@
 //
 
 import SwiftUI
+import ComposableArchitecture
 
 @main
 struct Challenge_Cat_APIApp: App {
-    let persistenceController = PersistenceController.shared
-
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            CatListView(
+                store: Store(
+                    initialState: CatListFeature.State(),
+                    reducer: { CatListFeature(environment: .init(
+                        apiClient: CatAPIClient(),
+                        persistenceController: .shared,
+                        mainQueue: .main
+                    )) }
+                )
+            )
         }
     }
 }
