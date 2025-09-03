@@ -15,7 +15,7 @@ struct PersistenceController {
     var context: NSManagedObjectContext { container.viewContext }
     
     init(inMemory: Bool = false) {
-        container = NSPersistentContainer(name: "Challenge-Cat-API")
+        container = NSPersistentContainer(name: "Challenge_Cat_API")
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }
@@ -48,31 +48,44 @@ extension PersistenceController {
         request.sortDescriptors = [NSSortDescriptor(keyPath: \CatEntity.id, ascending: true)]
         
         do {
-            return try context.fetch(request).map(Cat.init(entity:))
+            let entities = try context.fetch(request)
+            return entities.map { Cat(entity: $0) }
         } catch {
             print("❌ Failed to fetch cats: \(error)")
             return []
         }
     }
+
     
     func saveCats(_ cats: [Cat]) {
         let context = container.viewContext
-        
+
         for cat in cats {
-            let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
-            request.predicate = NSPredicate(format: "id == %@", cat.id ?? "")
-            
-            if let existing = try? context.fetch(request).first {
-                // Atualiza
-                existing.url = cat.url
-            } else {
-                // Cria novo
-                let entity = CatEntity(context: context)
-                entity.id = cat.id ?? UUID().uuidString
-                entity.url = cat.url
+            let entity = CatEntity(context: context)
+            entity.id = cat.id ?? UUID().uuidString
+            entity.url = cat.url
+            entity.width = Int64(cat.width ?? 0)
+            entity.height = Int64(cat.height ?? 0)
+
+            if let breeds = cat.breeds {
+                for breed in breeds {
+                    let breedEntity = BreedEntity(context: context)
+                    breedEntity.id = breed.id
+                    breedEntity.name = breed.name
+                    breedEntity.origin = breed.origin
+                    breedEntity.temperament = breed.temperament
+                    breedEntity.descriptionText = breed.descriptionText
+                    breedEntity.lifeSpan = breed.lifeSpan
+                    breedEntity.wikipediaUrl = breed.wikipediaUrl
+                    breedEntity.countryCode = breed.countryCode
+                    breedEntity.weightImperial = breed.weight?.imperial
+                    breedEntity.weightMetric = breed.weight?.metric
+
+                    entity.addToBreed(breedEntity)
+                }
             }
         }
-        
+
         do {
             try context.save()
         } catch {
