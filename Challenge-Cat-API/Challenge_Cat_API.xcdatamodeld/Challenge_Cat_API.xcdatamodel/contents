@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788.4" systemVersion="24G90" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
     <entity name="BreedEntity" representedClassName="BreedEntity" syncable="YES">
+        <attribute name="countryCode" optional="YES" attributeType="String"/>
         <attribute name="descriptionText" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="String"/>
         <attribute name="lifeSpan" optional="YES" attributeType="String"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="origin" optional="YES" attributeType="String"/>
         <attribute name="temperament" optional="YES" attributeType="String"/>
+        <attribute name="weightImperial" optional="YES" attributeType="String"/>
+        <attribute name="weightMetric" optional="YES" attributeType="String"/>
         <attribute name="wikipediaUrl" optional="YES" attributeType="String"/>
-        <relationship name="images" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CatEntity" inverseName="breed" inverseEntity="CatEntity"/>
+        <relationship name="images" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CatEntity" inverseName="breed" inverseEntity="CatEntity"/>
     </entity>
     <entity name="CatEntity" representedClassName="CatEntity" syncable="YES">
+        <attribute name="height" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="id" optional="YES" attributeType="String"/>
         <attribute name="url" optional="YES" attributeType="String"/>
-        <relationship name="breed" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="BreedEntity" inverseName="images" inverseEntity="BreedEntity"/>
+        <attribute name="width" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="breed" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="BreedEntity" inverseName="images" inverseEntity="BreedEntity"/>
     </entity>
 </model>
