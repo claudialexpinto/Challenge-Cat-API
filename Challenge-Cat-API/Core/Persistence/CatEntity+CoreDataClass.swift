@@ -2,7 +2,7 @@
 //  CatEntity+CoreDataClass.swift
 //  Challenge-Cat-API
 //
-//  Created by Claudia Pinto - Pessoal on 02/09/2025.
+//  Created by Claudia Pinto - Pessoal on 03/09/2025.
 //
 //
 

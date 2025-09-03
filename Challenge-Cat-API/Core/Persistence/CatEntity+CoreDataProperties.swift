@@ -2,7 +2,7 @@
 //  CatEntity+CoreDataProperties.swift
 //  Challenge-Cat-API
 //
-//  Created by Claudia Pinto - Pessoal on 02/09/2025.
+//  Created by Claudia Pinto - Pessoal on 03/09/2025.
 //
 //
 
@@ -18,7 +18,26 @@ extension CatEntity {
 
     @NSManaged public var id: String?
     @NSManaged public var url: String?
-    @NSManaged public var breed: BreedEntity?
+    @NSManaged public var width: Int64
+    @NSManaged public var height: Int64
+    @NSManaged public var breed: NSSet?
+
+}
+
+// MARK: Generated accessors for breed
+extension CatEntity {
+
+    @objc(addBreedObject:)
+    @NSManaged public func addToBreed(_ value: BreedEntity)
+
+    @objc(removeBreedObject:)
+    @NSManaged public func removeFromBreed(_ value: BreedEntity)
+
+    @objc(addBreed:)
+    @NSManaged public func addToBreed(_ values: NSSet)
+
+    @objc(removeBreed:)
+    @NSManaged public func removeFromBreed(_ values: NSSet)
 
 }
 
