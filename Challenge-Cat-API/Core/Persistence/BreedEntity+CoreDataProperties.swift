@@ -19,7 +19,7 @@ extension BreedEntity {
     @NSManaged public var countryCode: String?
     @NSManaged public var descriptionText: String?
     @NSManaged public var id: String?
-    @NSManaged public var lifeSpan: String?
+    @NSManaged public var life_span: String?
     @NSManaged public var name: String?
     @NSManaged public var origin: String?
     @NSManaged public var temperament: String?

@@ -71,7 +71,7 @@ extension PersistenceController {
             newBreed.origin = breed.origin
             newBreed.temperament = breed.temperament
             newBreed.descriptionText = breed.descriptionText
-            newBreed.lifeSpan = breed.lifeSpan
+            newBreed.life_span = breed.life_span
             newBreed.wikipediaUrl = breed.wikipediaUrl
             newBreed.countryCode = breed.countryCode
             newBreed.weightImperial = breed.weight?.imperial

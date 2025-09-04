@@ -57,7 +57,7 @@ public struct CatBreed: Identifiable, Equatable, Decodable {
     let origin: String?
     let temperament: String?
     let descriptionText: String?
-    let lifeSpan: String?
+    let life_span: String?
     let wikipediaUrl: String?
     let countryCode: String?
     let weight: CatBreedWeight?
@@ -75,7 +75,7 @@ extension CatBreed {
         self.origin = entity.origin
         self.temperament = entity.temperament
         self.descriptionText = entity.descriptionText
-        self.lifeSpan = entity.lifeSpan
+        self.life_span = entity.life_span
         self.wikipediaUrl = entity.wikipediaUrl
         self.countryCode = entity.countryCode
         self.weight = CatBreedWeight(imperial: entity.weightImperial, metric: entity.weightMetric)

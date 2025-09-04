@@ -4,7 +4,7 @@
         <attribute name="countryCode" optional="YES" attributeType="String"/>
         <attribute name="descriptionText" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="String"/>
-        <attribute name="lifeSpan" optional="YES" attributeType="String"/>
+        <attribute name="life_span" optional="YES" attributeType="String"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="origin" optional="YES" attributeType="String"/>
         <attribute name="temperament" optional="YES" attributeType="String"/>
