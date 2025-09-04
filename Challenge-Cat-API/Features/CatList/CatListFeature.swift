@@ -24,10 +24,9 @@ public struct CatListFeature: Reducer {
         public var canLoadMore: Bool = true
 
         @Presents public var alert: AlertState<Action>?
+        @Presents public var favoritesSheet: FavoritesFeature.State?
 
         public var searchText: String = ""
-        public var showFavorites: Bool = false   // usamos só este
-
         public init() {}
     }
     
@@ -41,12 +40,13 @@ public struct CatListFeature: Reducer {
         case errorDismissed
         
         case toggleFavorite(UUID)
-        case showAllCats
-        case showFavorites
         
         case alert(PresentationAction<CatListFeature.Action>)
+        case favoritesSheet(PresentationAction<FavoritesFeature.Action>)
         
         case searchTextChanged(String)
+        
+        case navigateToFavorites
     }
     
     // MARK: - Environment
@@ -139,17 +139,13 @@ public struct CatListFeature: Reducer {
                     state.favorites.insert(catUuid)
                 }
                 return .none
-
-            case .showAllCats:
-                state.showFavorites = false
-                return .none
-
-            case .showFavorites:
-                state.showFavorites = true
-                return .none
                 
             case let .searchTextChanged(text):
                 state.searchText = text
+                return .none
+
+            case .navigateToFavorites:
+                state.favoritesSheet = FavoritesFeature.State()
                 return .none
 
             default:

@@ -15,11 +15,14 @@ struct CatListView: View {
         WithViewStore(self.store, observe: { $0 }) { viewStore in
             NavigationView {
                 VStack {
-                    // Scrollable Grid responsiva
-                    catsGrid(viewStore: viewStore)
+                     catsGrid(viewStore: viewStore)
                     
-                    // Botões de filtro
-                    filters(viewStore: viewStore)
+                    CatFiltersView(
+                        allCatsAction: nil,
+                        favoritesAction: {
+                            viewStore.send(.navigateToFavorites)
+                        }
+                    )
                 }
                 .navigationTitle("Cats By Breeds")
                 .onAppear { viewStore.send(.onAppear) }
@@ -31,6 +34,14 @@ struct CatListView: View {
                     ),
                     prompt: "Search cats"
                 )
+                .navigationDestination(
+                    store: store.scope(
+                        state: \.$favoritesSheet,
+                        action: CatListFeature.Action.favoritesSheet
+                    )
+                ) { favoritesStore in
+                    FavoritesView(store: favoritesStore)
+                }
             }
         }
     }
@@ -41,14 +52,10 @@ struct CatListView: View {
         let baseWidth: CGFloat = 125
 
         let displayedCats: [Cat] = {
-            let baseCats = viewStore.showFavorites
-                ? viewStore.cats.filter { viewStore.favorites.contains($0.uuID) }
-                : viewStore.cats
-
             if viewStore.searchText.isEmpty {
-                return baseCats
+                return viewStore.cats
             } else {
-                return baseCats.filter { cat in
+                return viewStore.cats.filter { cat in
                     cat.breeds?.first?.name.localizedCaseInsensitiveContains(viewStore.searchText) ?? false
                 }
             }
@@ -77,36 +84,5 @@ struct CatListView: View {
             .padding(.horizontal, spacing)
             .padding(.vertical, spacing)
         }
-    }
-
-
-    // MARK: - Filtros
-    private func filters(viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>) -> some View {
-        HStack(spacing: 16) {
-            Button("All Cats") { viewStore.send(.showAllCats) }
-                .buttonStyle(FilterButtonStyle(isSelected: !viewStore.showFavorites))
-                .frame(maxWidth: .infinity)
-            
-            Button("Favorites") { viewStore.send(.showFavorites) }
-                .buttonStyle(FilterButtonStyle(isSelected: viewStore.showFavorites))
-                .frame(maxWidth: .infinity)
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-    }
-}
-
-// MARK: - Filter Button Style
-struct FilterButtonStyle: ButtonStyle {
-    let isSelected: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(.vertical, 8)
-            .padding(.horizontal, 8)
-            .background(isSelected ? Color.accentColor : Color.gray.opacity(0.2))
-            .foregroundColor(isSelected ? .white : .primary)
-            .cornerRadius(8)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
     }
 }
