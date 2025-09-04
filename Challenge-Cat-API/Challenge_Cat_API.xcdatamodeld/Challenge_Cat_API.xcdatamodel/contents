@@ -17,6 +17,7 @@
         <attribute name="height" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="id" optional="YES" attributeType="String"/>
         <attribute name="url" optional="YES" attributeType="String"/>
+        <attribute name="uuID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="width" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
         <relationship name="breed" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="BreedEntity" inverseName="images" inverseEntity="BreedEntity"/>
     </entity>

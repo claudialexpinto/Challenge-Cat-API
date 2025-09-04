@@ -2,7 +2,7 @@
 //  CatEntity+CoreDataProperties.swift
 //  Challenge-Cat-API
 //
-//  Created by Claudia Pinto - Pessoal on 03/09/2025.
+//  Created by Claudia Pinto - Pessoal on 04/09/2025.
 //
 //
 
@@ -16,10 +16,11 @@ extension CatEntity {
         return NSFetchRequest<CatEntity>(entityName: "CatEntity")
     }
 
+    @NSManaged public var height: Int64
     @NSManaged public var id: String?
     @NSManaged public var url: String?
     @NSManaged public var width: Int64
-    @NSManaged public var height: Int64
+    @NSManaged public var uuID: UUID?
     @NSManaged public var breed: NSSet?
 
 }
