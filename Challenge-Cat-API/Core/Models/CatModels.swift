@@ -14,17 +14,35 @@ public struct Cat: Identifiable, Equatable, Decodable {
     public let height: Int?
     public let breeds: [CatBreed]?
     
-    public let uiID = UUID()
-    public var displayID: UUID { uiID }
+    public let uuID: UUID
+    
+    public var displayID: UUID { uuID }
+    
+    enum CodingKeys: String, CodingKey {
+        case id, url, width, height, breeds
+    }
 }
 
+
 extension Cat {
+    // customised init to generate UUID
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(String.self, forKey: .id)
+        url = try container.decodeIfPresent(String.self, forKey: .url)
+        width = try container.decodeIfPresent(Int.self, forKey: .width)
+        height = try container.decodeIfPresent(Int.self, forKey: .height)
+        breeds = try container.decodeIfPresent([CatBreed].self, forKey: .breeds)
+        uuID = UUID()
+    }
+    
+    // Manual init for CoreData
     init(entity: CatEntity) {
         self.id = entity.id ?? UUID().uuidString
         self.url = entity.url ?? ""
         self.width = Int(entity.width)
         self.height = Int(entity.height)
-        
+        self.uuID = entity.uuID ?? UUID()
         if let breedEntities = entity.breed as? Set<BreedEntity> {
             self.breeds = breedEntities.map { CatBreed(entity: $0) }
         } else {
