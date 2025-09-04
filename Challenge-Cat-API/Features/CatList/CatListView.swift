@@ -40,9 +40,19 @@ struct CatListView: View {
         let spacing: CGFloat = 20
         let baseWidth: CGFloat = 125
 
-        let displayedCats = viewStore.showFavorites
-            ? viewStore.cats.filter { viewStore.favorites.contains($0.uuID) }
-            : viewStore.cats
+        let displayedCats: [Cat] = {
+            let baseCats = viewStore.showFavorites
+                ? viewStore.cats.filter { viewStore.favorites.contains($0.uuID) }
+                : viewStore.cats
+
+            if viewStore.searchText.isEmpty {
+                return baseCats
+            } else {
+                return baseCats.filter { cat in
+                    cat.breeds?.first?.name.localizedCaseInsensitiveContains(viewStore.searchText) ?? false
+                }
+            }
+        }()
 
         return ScrollView {
             LazyVGrid(
