@@ -52,6 +52,7 @@ struct CatAPIClient: CatAPIClientProtocol {
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         
         do {
+            let (data, _) = try await URLSession.shared.data(for: request)
             let decoder = JSONDecoder()
             return try decoder.decode([Cat].self, from: data)
         } catch let error as DecodingError {
