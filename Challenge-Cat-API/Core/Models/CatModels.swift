@@ -13,6 +13,7 @@ public struct Cat: Identifiable, Equatable, Decodable {
     public let width: Int?
     public let height: Int?
     public let breeds: [CatBreed]?
+    
     public let uiID = UUID()
     public var displayID: UUID { uiID }
 }
