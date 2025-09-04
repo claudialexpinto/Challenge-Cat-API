@@ -22,6 +22,7 @@ struct Challenge_Cat_APIApp: App {
                     )) }
                 )
             )
+            .accentColor(Color.teal) 
         }
     }
 }
