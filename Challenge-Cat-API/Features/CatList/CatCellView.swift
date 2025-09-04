@@ -23,26 +23,39 @@ struct CatCellView: View {
                             .scaledToFill()
                             .frame(width: width, height: width)
                             .clipped()
-                            .cornerRadius(10)
+                            .cornerRadius(12)
+                            .padding(6)
                     } placeholder: {
                         ProgressView()
                             .frame(width: width, height: width)
                     }
                 }
+
                 Text(cat.breeds?.first?.name ?? "Unknown Breed")
                     .font(.caption)
                     .lineLimit(1)
                     .frame(width: width)
+                    .padding(.vertical, 4)
+                    .foregroundColor(.primary)
             }
-            .background(Color.white)
-            .cornerRadius(10)
-            .shadow(radius: 2)
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+
 
             Button(action: toggleFavorite) {
                 Image(systemName: isFavorite ? "star.fill" : "star")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
                     .foregroundColor(.yellow)
-                    .padding(5)
+                    .padding(3)
+                    .background(.ultraThinMaterial, in: Circle())
+                    .shadow(color: .black.opacity(0.4), radius: 2, x: 0, y: 1)
+
             }
+            .offset(x: 8, y: -8)
+
         }
     }
 }
