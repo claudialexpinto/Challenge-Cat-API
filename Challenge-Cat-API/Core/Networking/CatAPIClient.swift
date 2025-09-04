@@ -17,9 +17,9 @@ enum CatAPIError: Error, LocalizedError {
         case .invalidURL:
             return "URL inválida."
         case .requestFailed(let err):
-            return "Pedido falhou: \(err.localizedDescription)"
+            return "Request failed: \(err.localizedDescription)"
         case .decodingFailed(let err):
-            return "Decoding falhou: \(err.localizedDescription)"
+            return "Decoding failed: \(err.localizedDescription)"
         }
     }
 }
@@ -40,7 +40,8 @@ struct CatAPIClient: CatAPIClientProtocol {
         components.queryItems = [
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "page", value: "\(page)"),
-            URLQueryItem(name: "order", value: "ASC")
+            URLQueryItem(name: "order", value: "ASC"),
+            URLQueryItem(name: "has_breeds", value: "1")
         ]
         
         guard let url = components.url else {
@@ -51,9 +52,7 @@ struct CatAPIClient: CatAPIClientProtocol {
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         
         do {
-            let (data, _) = try await URLSession.shared.data(for: request)
             let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
             return try decoder.decode([Cat].self, from: data)
         } catch let error as DecodingError {
             throw CatAPIError.decodingFailed(error)
