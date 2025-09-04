@@ -41,7 +41,7 @@ struct CatListView: View {
         let baseWidth: CGFloat = 125
 
         let displayedCats = viewStore.showFavorites
-            ? viewStore.cats.filter { viewStore.favorites.contains($0.uiID) }
+            ? viewStore.cats.filter { viewStore.favorites.contains($0.uuID) }
             : viewStore.cats
 
         return ScrollView {
@@ -49,12 +49,12 @@ struct CatListView: View {
                 columns: [GridItem(.adaptive(minimum: baseWidth), spacing: spacing)],
                 spacing: spacing
             ) {
-                ForEach(Array(displayedCats.enumerated()), id: \.element.uiID) { index, cat in
+                ForEach(Array(displayedCats.enumerated()), id: \.element.uuID) { index, cat in
                     CatCellView(
                         cat: cat,
                         width: baseWidth,
-                        isFavorite: viewStore.favorites.contains(cat.uiID),
-                        toggleFavorite: { viewStore.send(.toggleFavorite(cat.uiID)) }
+                        isFavorite: viewStore.favorites.contains(cat.uuID),
+                        toggleFavorite: { viewStore.send(.toggleFavorite(cat.uuID)) }
                     )
                     .aspectRatio(1, contentMode: .fit) // quadrado
                     .onAppear {
