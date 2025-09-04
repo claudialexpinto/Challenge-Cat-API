@@ -56,41 +56,53 @@ extension PersistenceController {
         }
     }
 
-    
-    func saveCats(_ cats: [Cat]) {
-        let context = container.viewContext
+    private func breedEntity(for breed: CatBreed, context: NSManagedObjectContext) -> BreedEntity {
+            let request: NSFetchRequest<BreedEntity> = BreedEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", breed.id)
+            request.fetchLimit = 1
 
-        for cat in cats {
-            let entity = CatEntity(context: context)
-            entity.id = cat.id ?? UUID().uuidString
-            entity.url = cat.url
-            entity.width = Int64(cat.width ?? 0)
-            entity.height = Int64(cat.height ?? 0)
+            if let existing = try? context.fetch(request).first {
+                return existing
+            }
 
-            if let breeds = cat.breeds {
-                for breed in breeds {
-                    let breedEntity = BreedEntity(context: context)
-                    breedEntity.id = breed.id
-                    breedEntity.name = breed.name
-                    breedEntity.origin = breed.origin
-                    breedEntity.temperament = breed.temperament
-                    breedEntity.descriptionText = breed.descriptionText
-                    breedEntity.lifeSpan = breed.lifeSpan
-                    breedEntity.wikipediaUrl = breed.wikipediaUrl
-                    breedEntity.countryCode = breed.countryCode
-                    breedEntity.weightImperial = breed.weight?.imperial
-                    breedEntity.weightMetric = breed.weight?.metric
+            let newBreed = BreedEntity(context: context)
+            newBreed.id = breed.id
+            newBreed.name = breed.name
+            newBreed.origin = breed.origin
+            newBreed.temperament = breed.temperament
+            newBreed.descriptionText = breed.descriptionText
+            newBreed.lifeSpan = breed.lifeSpan
+            newBreed.wikipediaUrl = breed.wikipediaUrl
+            newBreed.countryCode = breed.countryCode
+            newBreed.weightImperial = breed.weight?.imperial
+            newBreed.weightMetric = breed.weight?.metric
+            return newBreed
+        }
 
-                    entity.addToBreed(breedEntity)
+        func saveCats(_ cats: [Cat]) {
+            let context = container.viewContext
+
+            for cat in cats {
+                let entity = CatEntity(context: context)
+                entity.id = cat.id ?? UUID().uuidString
+                entity.url = cat.url
+                entity.width = Int64(cat.width ?? 0)
+                entity.height = Int64(cat.height ?? 0)
+                entity.uuID = cat.uuID
+
+                if let breeds = cat.breeds {
+                    for breed in breeds {
+                        let breedEntity = breedEntity(for: breed, context: context)
+                        entity.addToBreed(breedEntity)
+                    }
                 }
             }
-        }
 
-        do {
-            try context.save()
-        } catch {
-            print("❌ Failed to save cats: \(error)")
+            do {
+                try context.save()
+            } catch {
+                print("❌ Failed to save cats: \(error)")
+            }
         }
-    }
 }
 
