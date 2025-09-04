@@ -17,10 +17,17 @@ public struct CatListFeature: Reducer {
     @ObservableState
     public struct State: Equatable {
         public var cats: [Cat] = []
+        public var favorites: Set<UUID> = []
+
         public var currentPage: Int = 1
         public var isLoading: Bool = false
         public var canLoadMore: Bool = true
+
         @Presents public var alert: AlertState<Action>?
+
+        public var searchText: String = ""
+        public var showFavorites: Bool = false   // usamos só este
+
         public init() {}
     }
     
@@ -28,10 +35,18 @@ public struct CatListFeature: Reducer {
     public enum Action: Equatable {
         case onAppear
         case loadMore
+        
         case catsResponse([Cat])
         case failedToLoad(String)
         case errorDismissed
+        
+        case toggleFavorite(UUID)
+        case showAllCats
+        case showFavorites
+        
         case alert(PresentationAction<CatListFeature.Action>)
+        
+        case searchTextChanged(String)
     }
     
     // MARK: - Environment
@@ -62,7 +77,7 @@ public struct CatListFeature: Reducer {
 
                 return .run { send in
                     do {
-                        let cats = try await api.fetchCats(page: page, limit: 20)
+                        let cats = try await api.fetchCats(page: page, limit: 10)
                         persistence.saveCats(cats)
                         await send(.catsResponse(cats))
                     } catch {
@@ -80,7 +95,7 @@ public struct CatListFeature: Reducer {
 
                 return .run { send in
                     do {
-                        let cats = try await api.fetchCats(page: nextPage, limit: 20)
+                        let cats = try await api.fetchCats(page: nextPage, limit: 10)
                         persistence.saveCats(cats)
                         await send(.catsResponse(cats))
                     } catch {
@@ -117,6 +132,26 @@ public struct CatListFeature: Reducer {
             case .alert(.dismiss):
                 return .none
                 
+            case let .toggleFavorite(catUuid):
+                if state.favorites.contains(catUuid) {
+                    state.favorites.remove(catUuid)
+                } else {
+                    state.favorites.insert(catUuid)
+                }
+                return .none
+
+            case .showAllCats:
+                state.showFavorites = false
+                return .none
+
+            case .showFavorites:
+                state.showFavorites = true
+                return .none
+                
+            case let .searchTextChanged(text):
+                state.searchText = text
+                return .none
+
             default:
                 return .none
             }
