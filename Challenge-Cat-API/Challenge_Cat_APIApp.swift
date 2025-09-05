@@ -12,7 +12,7 @@ import ComposableArchitecture
 struct Challenge_Cat_APIApp: App {
     var body: some Scene {
         WindowGroup {
-            CatListView(
+            MainTabView(
                 store: Store(
                     initialState: CatListFeature.State(),
                     reducer: { CatListFeature(environment: .init(
