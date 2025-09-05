@@ -25,7 +25,6 @@ public struct CatListFeature: Reducer {
         @PresentationState public var alert: AlertState<Action>?
         @PresentationState public var selectedCat: CatDetailFeature.State?
         
-        public var showFavorites: Bool = false
         public var searchText: String = ""
         
         public init() {}
@@ -48,9 +47,6 @@ public struct CatListFeature: Reducer {
         case selectedCat(PresentationAction<CatDetailFeature.Action>)
         
         case searchTextChanged(String)
-        
-        case showAllCats
-        case showFavorites
     }
     
     // MARK: - Environment
@@ -142,14 +138,6 @@ public struct CatListFeature: Reducer {
          
             case let .searchTextChanged(text):
                 state.searchText = text
-                return .none
-
-            case .showAllCats:
-                state.showFavorites = false
-                return .none
-                
-            case .showFavorites:
-                state.showFavorites = true
                 return .none
                 
             case .selectCat(let id):
