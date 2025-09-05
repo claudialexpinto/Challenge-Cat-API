@@ -78,25 +78,42 @@ extension CatListView {
         let spacing: CGFloat = 20
         let baseWidth: CGFloat = 125
         
-        return ScrollView {
-            LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: baseWidth), spacing: spacing)],
-                spacing: spacing
-            ) {
-                ForEach(Array(cats.enumerated()), id: \.element.uuID) { index, cat in
-                    catGridItem(
-                        cat: cat,
-                        index: index,
-                        catsCount: cats.count,
-                        baseWidth: baseWidth,
-                        viewStore: viewStore
-                    )
+        return ZStack {
+            ScrollView {
+                if !cats.isEmpty {
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: baseWidth), spacing: spacing)],
+                        spacing: spacing
+                    ) {
+                        ForEach(Array(cats.enumerated()), id: \.element.uuID) { index, cat in
+                            catGridItem(
+                                cat: cat,
+                                index: index,
+                                catsCount: cats.count,
+                                baseWidth: baseWidth,
+                                viewStore: viewStore
+                            )
+                        }
+                    }
+                    .padding(.horizontal, spacing)
+                    .padding(.vertical, spacing)
                 }
             }
-            .padding(.horizontal, spacing)
-            .padding(.vertical, spacing)
+            
+            if cats.isEmpty && viewStore.isLoading {
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                    Text("Loading cats…")
+                        .foregroundColor(.secondary)
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
     }
+
 
     private func catGridItem(
         cat: Cat,
