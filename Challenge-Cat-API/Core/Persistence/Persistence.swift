@@ -70,7 +70,6 @@ extension PersistenceController {
             newBreed.name = breed.name
             newBreed.origin = breed.origin
             newBreed.temperament = breed.temperament
-            newBreed.descriptionText = breed.descriptionText
             newBreed.life_span = breed.life_span
             newBreed.wikipediaUrl = breed.wikipediaUrl
             newBreed.countryCode = breed.countryCode
