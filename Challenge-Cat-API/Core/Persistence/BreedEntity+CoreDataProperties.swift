@@ -2,7 +2,7 @@
 //  BreedEntity+CoreDataProperties.swift
 //  Challenge-Cat-API
 //
-//  Created by Claudia Pinto - Pessoal on 04/09/2025.
+//  Created by Claudia Pinto - Pessoal on 05/09/2025.
 //
 //
 
@@ -17,7 +17,6 @@ extension BreedEntity {
     }
 
     @NSManaged public var countryCode: String?
-    @NSManaged public var descriptionText: String?
     @NSManaged public var id: String?
     @NSManaged public var life_span: String?
     @NSManaged public var name: String?
