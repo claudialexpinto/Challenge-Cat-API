@@ -78,11 +78,16 @@ public struct CatListFeature: Reducer {
                 
                 if !savedCats.isEmpty && savedCats.allSatisfy({ !($0.breeds?.isEmpty ?? true) }) {
                     state.cats = savedCats
+                    state.isLoading = false
+                    state.currentPage = (savedCats.count / 10) + 1
+                    state.hasLoadedInitialCats = true
+                    return .none
                 } else {
-                    state.cats = [] 
+                    state.cats = []
+                    state.isLoading = true
+                    state.currentPage = 1
+                    state.hasLoadedInitialCats = false
                 }
-
-                state.isLoading = true
 
                 let page = state.currentPage
                 let api = environment.apiClient
@@ -98,7 +103,7 @@ public struct CatListFeature: Reducer {
                     }
                 }
 
-                
+
             case .loadMore:
                 guard state.canLoadMore, !state.isLoading else { return .none }
                 state.isLoading = true
@@ -120,10 +125,17 @@ public struct CatListFeature: Reducer {
             case let .catsResponse(cats):
                 state.isLoading = false
                 state.hasLoadedInitialCats = true
-                state.cats = cats
+                
+                if state.currentPage == 1 {
+                    state.cats = cats
+                } else {
+                    state.cats.append(contentsOf: cats)
+                }
+                
                 state.currentPage += 1
                 state.canLoadMore = !cats.isEmpty
                 return .none
+
                 
             case let .failedToLoad(message):
                 state.isLoading = false
@@ -172,16 +184,20 @@ public struct CatListFeature: Reducer {
 
             case .selectedCat(.presented(.toggleFavorite)):
                 guard let id = state.selectedCat?.id else { return .none }
+
                 if state.favorites.contains(id) {
                     state.favorites.remove(id)
                 } else {
                     state.favorites.insert(id)
                 }
-                if var detail = state.selectedCat {
-                    detail.isFavorite = state.favorites.contains(id)
-                    state.selectedCat = detail
+
+                if var selected = state.selectedCat {
+                    selected.isFavorite.toggle()
+                    state.selectedCat = selected
                 }
+
                 return .none
+
 
             case .selectedCat(.dismiss):
                 state.selectedCat = nil
