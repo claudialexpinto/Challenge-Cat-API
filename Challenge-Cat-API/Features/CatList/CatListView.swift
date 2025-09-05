@@ -46,13 +46,15 @@ struct CatListView: View {
                     addFilterButtons(for: viewStore)
                 }
                 .navigationTitle(viewStore.showFavorites ? "Favorites" :"Cats By Breeds")
-                .searchable(
-                    text: Binding(
-                        get: { viewStore.searchText },
-                        set: { viewStore.send(.searchTextChanged($0)) }
-                    ),
-                    prompt: "Search cats"
-                )
+                .if(!viewStore.showFavorites) { view in
+                    view.searchable(
+                        text: Binding(
+                            get: { viewStore.searchText },
+                            set: { viewStore.send(.searchTextChanged($0)) }
+                        ),
+                        prompt: "Search cats"
+                    )
+                }
                 .onAppear { viewStore.send(.onAppear) }
                 .alert(store: store.scope(state: \.$alert, action: CatListFeature.Action.alert))
                 .navigationDestination(
