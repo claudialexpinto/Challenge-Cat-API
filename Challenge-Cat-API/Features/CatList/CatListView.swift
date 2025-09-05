@@ -55,6 +55,15 @@ struct CatListView: View {
                 )
                 .onAppear { viewStore.send(.onAppear) }
                 .alert(store: store.scope(state: \.$alert, action: CatListFeature.Action.alert))
+                .navigationDestination(
+                    store: store.scope(
+                        state: \.$selectedCat,
+                        action: CatListFeature.Action.selectedCat
+                    )
+                ) { detailStore in
+                    CatDetailView(store: detailStore)
+                }
+
             }
         }
     }
@@ -62,31 +71,79 @@ struct CatListView: View {
 
 extension CatListView {
     
-    private func catsGrid(for cats: [Cat], viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>) -> some View {
+    private func catsGrid(
+        for cats: [Cat],
+        viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>
+    ) -> some View {
         let spacing: CGFloat = 20
         let baseWidth: CGFloat = 125
         
         return ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: baseWidth), spacing: spacing)], spacing: spacing) {
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: baseWidth), spacing: spacing)],
+                spacing: spacing
+            ) {
                 ForEach(Array(cats.enumerated()), id: \.element.uuID) { index, cat in
-                    CatCellView(
+                    catGridItem(
                         cat: cat,
-                        width: baseWidth,
-                        isFavorite: viewStore.favorites.contains(cat.uuID),
-                        toggleFavorite: { viewStore.send(.toggleFavorite(cat.uuID)) }
+                        index: index,
+                        catsCount: cats.count,
+                        baseWidth: baseWidth,
+                        viewStore: viewStore
                     )
-                    .aspectRatio(1, contentMode: .fit)
-                    .onAppear {
-                        if index == cats.count - 1 && !viewStore.showFavorites {
-                            viewStore.send(.loadMore)
-                        }
-                    }
                 }
             }
             .padding(.horizontal, spacing)
             .padding(.vertical, spacing)
         }
     }
+
+    private func catGridItem(
+        cat: Cat,
+        index: Int,
+        catsCount: Int,
+        baseWidth: CGFloat,
+        viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>
+    ) -> some View {
+        Button {
+            viewStore.send(.selectCat(cat.uuID))
+        } label: {
+            CatCellView(
+                cat: cat,
+                width: baseWidth,
+                isFavorite: viewStore.favorites.contains(cat.uuID),
+                toggleFavorite: { viewStore.send(.toggleFavorite(cat.uuID)) }
+            )
+            .aspectRatio(1, contentMode: .fit)
+        }
+        .buttonStyle(.plain) // para evitar estilo padrão do Button
+
+        .onAppear {
+            if index == catsCount - 1 && !viewStore.showFavorites {
+                viewStore.send(.loadMore)
+            }
+        }
+    }
+
+    private func catDetailStore(
+        for cat: Cat,
+        viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>
+    ) -> StoreOf<CatDetailFeature> {
+        let initialState = CatDetailFeature.State(
+            id: cat.uuID,            
+            cat: cat,
+            isFavorite: viewStore.favorites.contains(cat.uuID)
+        )
+        let reducer = CatDetailFeature()
+        let store: StoreOf<CatDetailFeature> = Store(
+            initialState: initialState
+        ) {
+            CatDetailFeature()
+        }
+        return store
+    }
+
+
     
     private func calculateAverageLifespan(for viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>) -> Double {
         let favCats = viewStore.cats.filter { viewStore.favorites.contains($0.uuID) }

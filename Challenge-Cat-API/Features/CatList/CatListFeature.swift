@@ -14,7 +14,6 @@ import Foundation
 public struct CatListFeature: Reducer {
     
     // MARK: - State
-    @ObservableState
     public struct State: Equatable {
         public var cats: [Cat] = []
         public var favorites: Set<UUID> = []
@@ -23,7 +22,8 @@ public struct CatListFeature: Reducer {
         public var isLoading: Bool = false
         public var canLoadMore: Bool = true
 
-        @Presents public var alert: AlertState<Action>?
+        @PresentationState public var alert: AlertState<Action>?
+        @PresentationState public var selectedCat: CatDetailFeature.State?
         
         public var showFavorites: Bool = false
 
@@ -44,6 +44,9 @@ public struct CatListFeature: Reducer {
         case toggleFavorite(UUID)
         
         case alert(PresentationAction<CatListFeature.Action>)
+        
+        case selectCat(UUID)
+        case selectedCat(PresentationAction<CatDetailFeature.Action>)
         
         case searchTextChanged(String)
         
@@ -152,6 +155,33 @@ public struct CatListFeature: Reducer {
                 
             case .showFavorites:
                 state.showFavorites = true
+                return .none
+                
+            case .selectCat(let id):
+                guard let cat = state.cats.first(where: { $0.uuID == id }) else { return .none }
+                state.selectedCat = CatDetailFeature.State(
+                    id: cat.uuID,
+                    cat: cat,
+                    isFavorite: state.favorites.contains(cat.uuID)
+                )
+                return .none
+
+            case .selectedCat(.presented(.toggleFavorite)):
+                // sincroniza o favorito no parent quando é alterado no detalhe
+                if let id = state.selectedCat?.id {
+                    if state.favorites.contains(id) {
+                        state.favorites.remove(id)
+                    } else {
+                        state.favorites.insert(id)
+                    }
+                }
+                return .none
+
+            case .selectedCat(.dismiss):
+                state.selectedCat = nil
+                return .none
+
+            case .selectedCat(.presented):
                 return .none
 
             default:
