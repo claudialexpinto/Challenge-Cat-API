@@ -12,7 +12,8 @@ import Foundation
 public struct CatDetailFeature: Reducer {
     public struct State: Equatable {
         let id: UUID
-        let cat: Cat
+        let url: String?
+        var breeds: [CatBreed]?
         var isFavorite: Bool
        
         @PresentationState var alert: AlertState<Action>?
@@ -26,7 +27,6 @@ public struct CatDetailFeature: Reducer {
     public func reduce(into state: inout State, action: Action) -> Effect<Action> {
         switch action {
         case .toggleFavorite:
-            state.isFavorite.toggle()
             return .none
 
         case .alert:

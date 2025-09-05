@@ -12,7 +12,7 @@ public struct Cat: Identifiable, Equatable, Decodable {
     public let url: String?
     public let width: Int?
     public let height: Int?
-    public let breeds: [CatBreed]?
+    public var breeds: [CatBreed]?
     
     public let uuID: UUID
     

@@ -130,8 +130,9 @@ extension CatListView {
         viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>
     ) -> StoreOf<CatDetailFeature> {
         let initialState = CatDetailFeature.State(
-            id: cat.uuID,            
-            cat: cat,
+            id: cat.uuID,
+            url: cat.url,
+            breeds: cat.breeds,
             isFavorite: viewStore.favorites.contains(cat.uuID)
         )
         let reducer = CatDetailFeature()

@@ -15,6 +15,8 @@ public struct CatListFeature: Reducer {
     
     // MARK: - State
     public struct State: Equatable {
+        public var hasLoadedInitialCats: Bool = false
+
         public var cats: [Cat] = []
         public var favorites: Set<UUID> = []
 
@@ -26,7 +28,6 @@ public struct CatListFeature: Reducer {
         @PresentationState public var selectedCat: CatDetailFeature.State?
         
         public var showFavorites: Bool = false
-
         public var searchText: String = ""
         
         public init() {}
@@ -71,9 +72,16 @@ public struct CatListFeature: Reducer {
     public var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
-
+                
             case .onAppear:
-                state.cats = environment.persistenceController.fetchCats()
+                let savedCats = environment.persistenceController.fetchCats()
+                
+                if !savedCats.isEmpty && savedCats.allSatisfy({ !($0.breeds?.isEmpty ?? true) }) {
+                    state.cats = savedCats
+                } else {
+                    state.cats = [] 
+                }
+
                 state.isLoading = true
 
                 let page = state.currentPage
@@ -90,14 +98,15 @@ public struct CatListFeature: Reducer {
                     }
                 }
 
+                
             case .loadMore:
                 guard state.canLoadMore, !state.isLoading else { return .none }
                 state.isLoading = true
-
+                
                 let nextPage = state.currentPage
                 let api = environment.apiClient
                 let persistence = environment.persistenceController
-
+                
                 return .run { send in
                     do {
                         let cats = try await api.fetchCats(page: nextPage, limit: 10)
@@ -107,18 +116,15 @@ public struct CatListFeature: Reducer {
                         await send(.failedToLoad(error.localizedDescription))
                     }
                 }
-
+                
             case let .catsResponse(cats):
                 state.isLoading = false
-                if state.currentPage == 1 {
-                    state.cats = cats
-                } else {
-                    state.cats.append(contentsOf: cats)
-                }
+                state.hasLoadedInitialCats = true
+                state.cats = cats
                 state.currentPage += 1
                 state.canLoadMore = !cats.isEmpty
                 return .none
-
+                
             case let .failedToLoad(message):
                 state.isLoading = false
                 state.alert = AlertState(
@@ -129,22 +135,18 @@ public struct CatListFeature: Reducer {
                     message: { TextState(message) }
                 )
                 return .none
-
+                
             case .alert(.presented(.errorDismissed)):
                 state.alert = nil
                 return .none
-
+                
             case .alert(.dismiss):
                 return .none
                 
             case let .toggleFavorite(catUuid):
-                if state.favorites.contains(catUuid) {
-                    state.favorites.remove(catUuid)
-                } else {
-                    state.favorites.insert(catUuid)
-                }
+                toggleFavorite(id: catUuid, state: &state)
                 return .none
-                
+         
             case let .searchTextChanged(text):
                 state.searchText = text
                 return .none
@@ -159,21 +161,25 @@ public struct CatListFeature: Reducer {
                 
             case .selectCat(let id):
                 guard let cat = state.cats.first(where: { $0.uuID == id }) else { return .none }
+
                 state.selectedCat = CatDetailFeature.State(
                     id: cat.uuID,
-                    cat: cat,
+                    url: cat.url,
+                    breeds: cat.breeds,
                     isFavorite: state.favorites.contains(cat.uuID)
                 )
                 return .none
 
             case .selectedCat(.presented(.toggleFavorite)):
-                // sincroniza o favorito no parent quando é alterado no detalhe
-                if let id = state.selectedCat?.id {
-                    if state.favorites.contains(id) {
-                        state.favorites.remove(id)
-                    } else {
-                        state.favorites.insert(id)
-                    }
+                guard let id = state.selectedCat?.id else { return .none }
+                if state.favorites.contains(id) {
+                    state.favorites.remove(id)
+                } else {
+                    state.favorites.insert(id)
+                }
+                if var detail = state.selectedCat {
+                    detail.isFavorite = state.favorites.contains(id)
+                    state.selectedCat = detail
                 }
                 return .none
 
@@ -183,10 +189,27 @@ public struct CatListFeature: Reducer {
 
             case .selectedCat(.presented):
                 return .none
-
+                
             default:
                 return .none
             }
         }
+    }
+}
+
+// MARK: - Helpers
+private func toggleFavorite(id: UUID, state: inout CatListFeature.State) {
+    let wasFavorite = state.favorites.contains(id)
+
+    if wasFavorite {
+        state.favorites.remove(id)
+    } else {
+        state.favorites.insert(id)
+    }
+
+    // Atualiza também o selectedCat
+    if var selected = state.selectedCat, selected.id == id {
+        selected.isFavorite = !wasFavorite
+        state.selectedCat = selected
     }
 }

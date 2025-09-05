@@ -15,7 +15,7 @@ struct CatDetailView: View {
         WithViewStore(self.store, observe: { $0 }) { viewStore in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    if let urlString = viewStore.cat.url, let url = URL(string: urlString) {
+                    if let urlString = viewStore.url, let url = URL(string: urlString) {
                         AsyncImage(url: url) { phase in
                             switch phase {
                             case .empty:
@@ -37,17 +37,17 @@ struct CatDetailView: View {
                         Image(systemName: "photo").resizable().scaledToFit()
                     }
 
-                    Text(viewStore.cat.breeds?.first?.name ?? "Unknown")
+                    Text(viewStore.breeds?.first?.name ?? "Unknown")
                         .font(.title)
                         .bold()
 
-                    Text("Origin: \(viewStore.cat.breeds?.first?.origin ?? "Unknown")")
+                    Text("Origin: \(viewStore.breeds?.first?.origin ?? "Unknown")")
                         .font(.subheadline)
 
-                    Text("Temperament: \(viewStore.cat.breeds?.first?.temperament ?? "Unknown")")
+                    Text("Temperament: \(viewStore.breeds?.first?.temperament ?? "Unknown")")
                         .font(.body)
 
-                    Text(viewStore.cat.breeds?.first?.description ?? "No description")
+                    Text(viewStore.breeds?.first?.description ?? "No description")
                         .font(.body)
                         .padding(.top, 8)
 
