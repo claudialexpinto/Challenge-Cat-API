@@ -35,7 +35,6 @@ public struct CatListFeature: Reducer {
     }
     
     // MARK: - Action
-    // Dentro de CatListFeature.Action
     public enum Action: Equatable {
         case onAppear
         case loadMore
@@ -81,11 +80,22 @@ public struct CatListFeature: Reducer {
                 state.hasLoaded = true
                 state.isLoading = true
 
-                state.favorites = Set(environment.persistenceController.fetchFavoriteCats().compactMap { $0.id })
+                let persistence = environment.persistenceController
+                let favorites = Set(persistence.fetchFavoriteCats().compactMap { $0.id })
+                state.favorites = favorites
+
+                let localCats = persistence.fetchCats()
+                if !localCats.isEmpty {
+                    state.cats = localCats.map { cat -> Cat in
+                        var c = cat
+                        if let id = cat.id { c.isFavorite = favorites.contains(id) }
+                        return c
+                    }
+                    state.isLoading = false
+                }
 
                 let page = state.currentPage
                 let api = environment.apiClient
-                let persistence = environment.persistenceController
                 let limit = state.pageSize
 
                 return .run { send in
@@ -97,7 +107,6 @@ public struct CatListFeature: Reducer {
                         await send(.failedToLoad(error.localizedDescription))
                     }
                 }
-
 
             case .loadMore:
                 guard state.canLoadMore, !state.isLoading, !state.isLoadingMore else { return .none }

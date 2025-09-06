@@ -41,10 +41,26 @@ final class PersistenceController: PersistenceControllerProtocol {
     
     func fetchCats() -> [Cat] {
         let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \CatEntity.id, ascending: true)]
         let entities = (try? context.fetch(request)) ?? []
-        return entities.map { Cat(entity: $0) }
+        return entities.map { entity in
+            var cat = Cat(entity: entity)
+            cat.breeds = entity.breed?.compactMap { ($0 as? BreedEntity).map { breed in
+                CatBreed(
+                    id: breed.id!,
+                    name: breed.name ?? "",
+                    origin: breed.origin,
+                    temperament: breed.temperament,
+                    description: breed.descriptionText,
+                    life_span: breed.life_span,
+                    wikipediaUrl: breed.wikipediaUrl,
+                    countryCode: breed.countryCode,
+                    weight: CatBreedWeight(imperial: breed.weightImperial, metric: breed.weightMetric)
+                )
+            }}
+            return cat
+        }
     }
+
     
     func fetchFavoriteCats() -> [Cat] {
         let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
@@ -73,12 +89,10 @@ final class PersistenceController: PersistenceControllerProtocol {
             entity.width = Int64(cat.width ?? 0)
             entity.height = Int64(cat.height ?? 0)
             
-            // Manter o isFavorite anterior se existir
             if entity.isFavorite == false {
                 entity.isFavorite = cat.isFavorite
             }
             
-            // Atualizar breeds
             entity.removeFromBreed(entity.breed ?? NSSet())
             if let breeds = cat.breeds {
                 for breed in breeds {

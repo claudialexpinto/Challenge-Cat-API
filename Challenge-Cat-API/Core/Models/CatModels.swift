@@ -66,6 +66,13 @@ public struct CatBreed: Identifiable, Equatable, Decodable {
     let weight: CatBreedWeight?
 }
 
+extension BreedEntity {
+    var descriptionText: String {
+        self.value(forKey: "description") as? String ?? "No description available"
+    }
+}
+
+
 public struct CatBreedWeight: Equatable, Decodable {
     let imperial: String?
     let metric: String?
@@ -80,7 +87,7 @@ extension CatBreed {
         self.life_span = entity.life_span
         self.wikipediaUrl = entity.wikipediaUrl
         self.countryCode = entity.countryCode
-        self.description = entity.description
+        self.description = entity.descriptionText
         self.weight = CatBreedWeight(imperial: entity.weightImperial, metric: entity.weightMetric)
     }
 }
