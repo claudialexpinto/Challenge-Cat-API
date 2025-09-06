@@ -50,6 +50,13 @@ struct CatGridHelper {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            
+            if viewStore.isLoadingMore {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.5)
+                    .padding()
+            }
         }
     }
     

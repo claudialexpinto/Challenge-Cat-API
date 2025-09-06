@@ -18,7 +18,8 @@ struct Challenge_Cat_APIApp: App {
                     reducer: { CatListFeature(environment: .init(
                         apiClient: CatAPIClient(),
                         persistenceController: PersistenceController.shared,
-                        mainQueue: .main
+                        mainQueue: .main,
+                        pageSize: 10
                     )) }
                 )
             )

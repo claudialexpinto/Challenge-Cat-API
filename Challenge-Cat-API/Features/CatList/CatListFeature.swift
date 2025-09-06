@@ -21,7 +21,9 @@ public struct CatListFeature: Reducer {
         public var currentPage: Int = 1
         public var isLoading: Bool = false
         public var canLoadMore: Bool = true
-
+        public var isLoadingMore: Bool = false
+        public var pageSize: Int = 10
+        
         @PresentationState public var alert: AlertState<Action>?
         @PresentationState public var selectedCat: CatDetailFeature.State?
         
@@ -54,6 +56,7 @@ public struct CatListFeature: Reducer {
         var apiClient: CatAPIClientProtocol
         var persistenceController: PersistenceControllerProtocol
         var mainQueue: AnySchedulerOf<DispatchQueue>
+        var pageSize: Int
     }
     
     private let environment: Environment
@@ -76,10 +79,11 @@ public struct CatListFeature: Reducer {
                 let page = state.currentPage
                 let api = environment.apiClient
                 let persistence = environment.persistenceController
+                let limit = environment.pageSize
                 
                 return .run { send in
                     do {
-                        let cats = try await api.fetchCats(page: page, limit: 10)
+                        let cats = try await api.fetchCats(page: page, limit: limit)
                         persistence.saveCats(cats)
                         await send(.catsResponse(cats))
                     } catch {
@@ -88,30 +92,34 @@ public struct CatListFeature: Reducer {
                 }
                 
             case .loadMore:
-                guard state.canLoadMore, !state.isLoading else { return .none }
-                state.isLoading = true
-                
+                guard state.canLoadMore, !state.isLoading, !state.isLoadingMore else { return .none }
+                state.isLoadingMore = true
+
                 let nextPage = state.currentPage
                 let api = environment.apiClient
                 let persistence = environment.persistenceController
-                
+                let limit = environment.pageSize
+
                 return .run { send in
                     do {
-                        let cats = try await api.fetchCats(page: nextPage, limit: 10)
+                        let cats = try await api.fetchCats(page: nextPage, limit: limit)
                         persistence.saveCats(cats)
                         await send(.catsResponse(cats))
                     } catch {
                         await send(.failedToLoad(error.localizedDescription))
                     }
                 }
-                
+
             case let .catsResponse(cats):
                 state.isLoading = false
+                state.isLoadingMore = false
+                
                 if state.currentPage == 1 {
                     state.cats = cats
                 } else {
                     state.cats.append(contentsOf: cats)
                 }
+                
                 state.currentPage += 1
                 state.canLoadMore = !cats.isEmpty
                 return .none
