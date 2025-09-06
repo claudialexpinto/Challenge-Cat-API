@@ -27,8 +27,8 @@ public struct CatDetailFeature: Reducer {
     public func reduce(into state: inout State, action: Action) -> Effect<Action> {
         switch action {
         case .toggleFavorite:
+            state.isFavorite.toggle()
             return .none
-
         case .alert:
             return .none
         }

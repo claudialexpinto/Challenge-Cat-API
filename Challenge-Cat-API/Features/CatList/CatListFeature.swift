@@ -39,7 +39,7 @@ public struct CatListFeature: Reducer {
         case failedToLoad(String)
         case errorDismissed
         
-        case toggleFavorite(UUID)
+        case toggleFavorite(id: UUID)
         
         case alert(PresentationAction<CatListFeature.Action>)
         
@@ -70,6 +70,8 @@ public struct CatListFeature: Reducer {
             case .onAppear:
                 state.cats = environment.persistenceController.fetchCats()
                 state.isLoading = true
+                state.favorites = Set(environment.persistenceController.fetchFavoriteCats().map { $0.uuID })
+
                 
                 let page = state.currentPage
                 let api = environment.apiClient
@@ -132,9 +134,15 @@ public struct CatListFeature: Reducer {
             case .alert(.dismiss):
                 return .none
                 
-            case let .toggleFavorite(catUuid):
-                toggleFavorite(id: catUuid, state: &state)
+            case let .toggleFavorite(catID):
+                environment.persistenceController.toggleFavorite(catUUID: catID)
+                state.favorites = Set(environment.persistenceController.fetchFavoriteCats().map { $0.uuID })
+                if var selected = state.selectedCat, selected.id == catID {
+                    selected.isFavorite.toggle()
+                    state.selectedCat = selected
+                }
                 return .none
+
          
             case let .searchTextChanged(text):
                 state.searchText = text
@@ -152,7 +160,7 @@ public struct CatListFeature: Reducer {
 
             case .selectedCat(.presented(.toggleFavorite)):
                 if let id = state.selectedCat?.id {
-                    toggleFavorite(id: id, state: &state)
+                    return .send(.toggleFavorite(id: id))
                 }
                 return .none
 
@@ -167,21 +175,5 @@ public struct CatListFeature: Reducer {
                 return .none
             }
         }
-    }
-}
-
-// MARK: - Helpers
-private func toggleFavorite(id: UUID, state: inout CatListFeature.State) {
-    let wasFavorite = state.favorites.contains(id)
-
-    if wasFavorite {
-        state.favorites.remove(id)
-    } else {
-        state.favorites.insert(id)
-    }
-
-    if var selected = state.selectedCat, selected.id == id {
-        selected.isFavorite = !wasFavorite
-        state.selectedCat = selected
     }
 }

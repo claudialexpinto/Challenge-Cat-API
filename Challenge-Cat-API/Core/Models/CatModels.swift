@@ -13,6 +13,7 @@ public struct Cat: Identifiable, Equatable, Decodable {
     public let width: Int?
     public let height: Int?
     public var breeds: [CatBreed]?
+    public var isFavorite: Bool = false
     
     public let uuID: UUID
     
@@ -43,6 +44,7 @@ extension Cat {
         self.width = Int(entity.width)
         self.height = Int(entity.height)
         self.uuID = entity.uuID ?? UUID()
+        self.isFavorite = entity.isFavorite
         if let breedEntities = entity.breed as? Set<BreedEntity> {
             self.breeds = breedEntities.map { CatBreed(entity: $0) }
         } else {

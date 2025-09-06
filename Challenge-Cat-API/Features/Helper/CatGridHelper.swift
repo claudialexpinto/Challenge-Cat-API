@@ -67,7 +67,7 @@ struct CatGridHelper {
                 cat: cat,
                 width: baseWidth,
                 isFavorite: viewStore.favorites.contains(cat.uuID),
-                toggleFavorite: { viewStore.send(.toggleFavorite(cat.uuID)) }
+                toggleFavorite: { viewStore.send(.toggleFavorite(id: cat.uuID)) }
             )
             .aspectRatio(1, contentMode: .fit)
         }

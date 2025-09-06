@@ -34,7 +34,11 @@ struct CatDetailView: View {
                             }
                         }
                     } else {
-                        Image(systemName: "photo").resizable().scaledToFit()
+                        Image(systemName: "photo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: .infinity, minHeight: 200)
+                            .foregroundColor(.secondary)
                     }
 
                     Text(viewStore.breeds?.first?.name ?? "Unknown")
@@ -51,7 +55,9 @@ struct CatDetailView: View {
                         .font(.body)
                         .padding(.top, 8)
 
-                    Button(action: { viewStore.send(.toggleFavorite) }) {
+                    Button {
+                        viewStore.send(.toggleFavorite)
+                    } label: {
                         HStack {
                             Image(systemName: viewStore.isFavorite ? "heart.fill" : "heart")
                             Text(viewStore.isFavorite ? "Remove from Favorites" : "Add to Favorites")
@@ -70,3 +76,4 @@ struct CatDetailView: View {
         }
     }
 }
+

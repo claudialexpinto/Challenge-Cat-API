@@ -129,4 +129,24 @@ extension PersistenceController {
             print("❌ Failed to save cats: \(error)")
         }
     }
+    
+    func toggleFavorite(catUUID: UUID) {
+        let context = container.viewContext
+        let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "uuID == %@", catUUID as CVarArg)
+        if let cat = try? context.fetch(request).first {
+            cat.isFavorite.toggle()
+            try? context.save()
+        }
+    }
+    
+    func fetchFavoriteCats() -> [Cat] {
+        let context = container.viewContext
+        let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "isFavorite == true")
+        let entities = (try? context.fetch(request)) ?? []
+        return entities.map { Cat(entity: $0) }
+    }
+
+
 }
