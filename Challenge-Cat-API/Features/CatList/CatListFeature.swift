@@ -52,7 +52,7 @@ public struct CatListFeature: Reducer {
     // MARK: - Environment
     public struct Environment {
         var apiClient: CatAPIClientProtocol
-        var persistenceController: PersistenceController
+        var persistenceController: PersistenceControllerProtocol
         var mainQueue: AnySchedulerOf<DispatchQueue>
     }
     
@@ -146,7 +146,14 @@ public struct CatListFeature: Reducer {
          
             case let .searchTextChanged(text):
                 state.searchText = text
+                if text.isEmpty {
+                    state.cats = environment.persistenceController.fetchCats()
+                } else {
+                    state.cats = environment.persistenceController.fetchCats()
+                        .filter { $0.breeds?.first?.name.localizedCaseInsensitiveContains(text) ?? false }
+                }
                 return .none
+
                 
             case .selectCat(let id):
                 guard let cat = state.cats.first(where: { $0.uuID == id }) else { return .none }

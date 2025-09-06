@@ -7,7 +7,15 @@
 
 import CoreData
 
-struct PersistenceController {
+public protocol PersistenceControllerProtocol {
+    func saveCats(_ cats: [Cat])
+    func fetchCats() -> [Cat]
+    func saveContext()
+    func fetchFavoriteCats() -> [Cat]
+    func toggleFavorite(catUUID: UUID)
+}
+
+final class PersistenceController: PersistenceControllerProtocol {
     static let shared = PersistenceController()
     
     let container: NSPersistentContainer
@@ -36,9 +44,6 @@ struct PersistenceController {
             }
         }
     }
-
-}
-extension PersistenceController {
 
     func fetchCats() -> [Cat] {
         let context = container.viewContext
@@ -147,6 +152,4 @@ extension PersistenceController {
         let entities = (try? context.fetch(request)) ?? []
         return entities.map { Cat(entity: $0) }
     }
-
-
 }
