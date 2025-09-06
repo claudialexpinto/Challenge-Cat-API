@@ -15,6 +15,7 @@ struct CatDetailView: View {
         WithViewStore(self.store, observe: { $0 }) { viewStore in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    // imagem com fallback robusto
                     if let urlString = viewStore.url, let url = URL(string: urlString) {
                         AsyncImage(url: url) { phase in
                             switch phase {
@@ -28,32 +29,74 @@ struct CatDetailView: View {
                                     .frame(maxWidth: .infinity)
                                     .cornerRadius(12)
                             case .failure:
-                                Color.gray.frame(height: 200)
+                                ZStack {
+                                    Color(.systemGray5)
+                                    Image(systemName: "cat")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 60, height: 60)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 200)
+                                .cornerRadius(12)
                             @unknown default:
                                 EmptyView()
                             }
                         }
                     } else {
-                        Image(systemName: "photo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: .infinity, minHeight: 200)
-                            .foregroundColor(.secondary)
+                        ZStack {
+                            Color(.systemGray5)
+                            Image(systemName: "cat")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 60, height: 60)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 200)
+                        .cornerRadius(12)
                     }
 
-                    Text(viewStore.breeds?.first?.name ?? "Unknown")
-                        .font(.title)
-                        .bold()
+                    if let breeds = viewStore.breeds, !breeds.isEmpty {
+                        ForEach(breeds) { breed in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(breed.name)
+                                    .font(.title2)
+                                    .bold()
 
-                    Text("Origin: \(viewStore.breeds?.first?.origin ?? "Unknown")")
-                        .font(.subheadline)
+                                if let origin = breed.origin {
+                                    Text("Origin: \(origin)")
+                                        .font(.subheadline)
+                                }
 
-                    Text("Temperament: \(viewStore.breeds?.first?.temperament ?? "Unknown")")
-                        .font(.body)
+                                if let temperament = breed.temperament {
+                                    Text("Temperament: \(temperament)")
+                                        .font(.body)
+                                }
 
-                    Text(viewStore.breeds?.first?.description ?? "No description")
-                        .font(.body)
-                        .padding(.top, 8)
+                                if let life = breed.life_span {
+                                    Text("Life span: \(life)")
+                                        .font(.subheadline)
+                                }
+
+                                if let desc = breed.description {
+                                    Text(desc)
+                                        .font(.body)
+                                }
+
+                                if let wiki = breed.wikipediaUrl, let wikiURL = URL(string: wiki) {
+                                    Link("Open in Wikipedia", destination: wikiURL)
+                                        .font(.footnote)
+                                        .padding(.top, 4)
+                                }
+
+                                Divider()
+                            }
+                        }
+                    } else {
+                        Text("No breed information available.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
 
                     Button {
                         viewStore.send(.toggleFavorite)
@@ -76,4 +119,3 @@ struct CatDetailView: View {
         }
     }
 }
-
