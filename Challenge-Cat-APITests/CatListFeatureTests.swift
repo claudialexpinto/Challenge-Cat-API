@@ -66,10 +66,9 @@ final class CatListFeatureTests: XCTestCase {
     }
     
     func testOnAppearLoadsCats() async {
-        let sampleCats = [
-            cat1, cat2
-        ]
+        let sampleCats = [cat1, cat2]
         apiClient.fetchCatsResult = .success(sampleCats)
+        persistence.setFavoriteCats([cat1])
         
         let store = TestStore(
             initialState: CatListFeature.State(),
@@ -78,35 +77,48 @@ final class CatListFeatureTests: XCTestCase {
                     environment: .init(
                         apiClient: apiClient,
                         persistenceController: persistence,
-                        mainQueue: scheduler.eraseToAnyScheduler()
+                        mainQueue: scheduler.eraseToAnyScheduler(),
+                        pageSize: 10
                     )
                 ).body
             }
         )
-        
+
         await store.send(.onAppear) {
             $0.isLoading = true
+            $0.hasLoaded = true
             $0.cats = []
-            $0.favorites = []
+            $0.favorites = Set([self.cat1.id ?? ""])
         }
-        
+
+        await scheduler.advance()
+
         await store.receive(.catsResponse(sampleCats)) {
             $0.isLoading = false
-            $0.cats = sampleCats
+            let favorites = $0.favorites
+            $0.cats = sampleCats.map { cat in
+                var c = cat
+                if let id = cat.id {
+                    c.isFavorite = favorites.contains(id)
+                }
+                return c
+            }
             $0.currentPage = 2
             $0.canLoadMore = true
         }
+
     }
+
     
     func testToggleFavoriteAddsAndRemoves() async {
         let cat = Cat(
-            id: nil,
+            id: "1",
             url: "url",
-            width: nil,
-            height: nil,
+            width: 100,
+            height: 100,
             breeds: nil,
             isFavorite: false,
-            uuID: UUID()
+            uuID: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!
         )
         
         persistence.saveCats([cat])
@@ -118,26 +130,30 @@ final class CatListFeatureTests: XCTestCase {
                     environment: .init(
                         apiClient: apiClient,
                         persistenceController: persistence,
-                        mainQueue: scheduler.eraseToAnyScheduler()
+                        mainQueue: scheduler.eraseToAnyScheduler(),
+                        pageSize: 10
                     )
                 ).body
             }
         )
         
-        await store.send(.toggleFavorite(id: cat.uuID)) {
-            $0.favorites = [cat.uuID]
+        await store.send(.toggleFavorite(id: cat.id ?? "")) {
+            $0.favorites = [cat.id ?? ""]
         }
         
-        await store.send(.toggleFavorite(id: cat.uuID)) {
+        XCTAssertTrue(persistence.favoriteCats.contains(where: { $0.id == cat.id }))
+        
+        await store.send(.toggleFavorite(id: cat.id ?? "")) {
             $0.favorites = []
         }
+        
+        XCTAssertFalse(persistence.favoriteCats.contains(where: { $0.id == cat.id }))
     }
     
-    // Teste atualizado
     func testSearchTextFiltersCats() async {
-        // Configurar o mock API para retornar os cats
-        let fetchedCats = [cat1, cat2]
-        apiClient.fetchCatsResult = .success(fetchedCats)
+        let sampleCats = [cat1, cat2]
+        apiClient.fetchCatsResult = .success(sampleCats)
+        persistence.setFavoriteCats([cat1])
 
         let store = TestStore(
             initialState: CatListFeature.State(),
@@ -146,39 +162,43 @@ final class CatListFeatureTests: XCTestCase {
                     environment: .init(
                         apiClient: apiClient,
                         persistenceController: persistence,
-                        mainQueue: scheduler.eraseToAnyScheduler()
+                        mainQueue: scheduler.eraseToAnyScheduler(),
+                        pageSize: 10
                     )
                 ).body
             }
         )
 
-        // onAppear vai buscar do persistence (vazio neste caso)
         await store.send(.onAppear) {
             $0.isLoading = true
-            $0.cats = [] // persistence vazio
-            $0.favorites = []
+            $0.hasLoaded = true
+            $0.cats = []
+            $0.favorites = Set([self.cat1.id ?? ""])
         }
 
-        // Avançar o scheduler para o efeito assíncrono
         await scheduler.advance()
 
-        // Receber a ação do API mock
-        await store.receive(.catsResponse(fetchedCats)) {
+        await store.receive(.catsResponse(sampleCats)) {
             $0.isLoading = false
-            $0.cats = fetchedCats
+            $0.cats = sampleCats.map { cat in
+                var c = cat
+                c.isFavorite = store.state.favorites.contains(cat.id ?? "")
+                return c
+            }
             $0.currentPage = 2
             $0.canLoadMore = true
         }
 
-        // Testar filtragem
         await store.send(.searchTextChanged("Siamese")) {
             $0.searchText = "Siamese"
-            $0.cats = [fetchedCats[0]] // usa exatamente o objeto que veio da API
+            $0.cats = $0.cats.filter { $0.breeds?.contains(where: { $0.name == "Siamese" }) ?? false }
         }
 
         XCTAssertEqual(store.state.cats.count, 1)
         XCTAssertEqual(store.state.cats.first?.breeds?.first?.name, "Siamese")
     }
+
+
 }
 
 
@@ -199,18 +219,30 @@ class MockPersistenceController: PersistenceControllerProtocol {
     private(set) var savedCats: [Cat] = []
     private(set) var favoriteCats: [Cat] = []
     
+    func setFavoriteCats(_ cats: [Cat]) {
+           favoriteCats = cats
+       }
+    
     func saveCats(_ cats: [Cat]) {
         savedCats.append(contentsOf: cats)
     }
     
-    func fetchCats() -> [Cat] { savedCats }
+    func fetchCats() -> [Cat] {
+        return savedCats.map { cat in
+                    var c = cat
+                    if favoriteCats.contains(where: { $0.uuID == cat.uuID }) {
+                        c.isFavorite = true
+                    }
+                    return c
+                }
+    }
     
     func fetchFavoriteCats() -> [Cat] { favoriteCats }
     
-    func toggleFavorite(catUUID: UUID) {
-        if let index = favoriteCats.firstIndex(where: { $0.uuID == catUUID }) {
+    func toggleFavorite(catID : String) {
+        if let index = favoriteCats.firstIndex(where: { $0.id == catID }) {
             favoriteCats.remove(at: index)
-        } else if let cat = savedCats.first(where: { $0.uuID == catUUID }) {
+        } else if let cat = savedCats.first(where: { $0.id == catID }) {
             favoriteCats.append(cat)
         }
     }
