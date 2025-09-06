@@ -143,17 +143,23 @@ public struct CatListFeature: Reducer {
                 }
                 return .none
 
-         
             case let .searchTextChanged(text):
                 state.searchText = text
-                if text.isEmpty {
-                    state.cats = environment.persistenceController.fetchCats()
+                let allCats = environment.persistenceController.fetchCats()
+                if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    state.cats = allCats
                 } else {
-                    state.cats = environment.persistenceController.fetchCats()
-                        .filter { $0.breeds?.first?.name.localizedCaseInsensitiveContains(text) ?? false }
+                    let lower = text.localizedLowercase
+                    state.cats = allCats.filter { cat in
+                        guard let breeds = cat.breeds else { return false }
+                        return breeds.contains { breed in
+                            (breed.name.localizedCaseInsensitiveContains(lower))
+                            || (breed.origin?.localizedCaseInsensitiveContains(lower) ?? false)
+                            || (breed.temperament?.localizedCaseInsensitiveContains(lower) ?? false)
+                        }
+                    }
                 }
                 return .none
-
                 
             case .selectCat(let id):
                 guard let cat = state.cats.first(where: { $0.uuID == id }) else { return .none }
