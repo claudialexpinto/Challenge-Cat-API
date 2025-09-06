@@ -24,6 +24,8 @@ public struct CatListFeature: Reducer {
         public var isLoadingMore: Bool = false
         public var pageSize: Int = 10
         
+        public var hasLoaded: Bool = false
+        
         @PresentationState public var alert: AlertState<Action>?
         @PresentationState public var selectedCat: CatDetailFeature.State?
         
@@ -72,16 +74,16 @@ public struct CatListFeature: Reducer {
             switch action {
                 
             case .onAppear:
-                state.cats = environment.persistenceController.fetchCats()
-                state.isLoading = true
                 state.favorites = Set(environment.persistenceController.fetchFavoriteCats().map { $0.uuID })
+                guard !state.hasLoaded else { return .none }
+                state.hasLoaded = true
+                state.isLoading = true
 
-                
                 let page = state.currentPage
                 let api = environment.apiClient
                 let persistence = environment.persistenceController
-                let limit = environment.pageSize
-                
+                let limit = state.pageSize
+
                 return .run { send in
                     do {
                         let cats = try await api.fetchCats(page: page, limit: limit)
@@ -91,7 +93,7 @@ public struct CatListFeature: Reducer {
                         await send(.failedToLoad(error.localizedDescription))
                     }
                 }
-                
+
             case .loadMore:
                 guard state.canLoadMore, !state.isLoading, !state.isLoadingMore else { return .none }
                 state.isLoadingMore = true
