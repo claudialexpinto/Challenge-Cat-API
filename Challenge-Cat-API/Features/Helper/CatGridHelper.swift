@@ -68,13 +68,13 @@ struct CatGridHelper {
         viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>
     ) -> some View {
         Button {
-            viewStore.send(.selectCat(cat.uuID))
+            viewStore.send(.selectCat(cat.id ?? ""))
         } label: {
             CatCellView(
                 cat: cat,
                 width: baseWidth,
-                isFavorite: viewStore.favorites.contains(cat.uuID),
-                toggleFavorite: { viewStore.send(.toggleFavorite(id: cat.uuID)) }
+                isFavorite: viewStore.favorites.contains(cat.id ?? ""),
+                toggleFavorite: { viewStore.send(.toggleFavorite(id: cat.id ?? "")) }
             )
             .aspectRatio(1, contentMode: .fit)
         }
@@ -91,10 +91,11 @@ struct CatGridHelper {
         viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>
     ) -> StoreOf<CatDetailFeature> {
         let initialState = CatDetailFeature.State(
-            id: cat.uuID,
+            uuid: cat.uuID,
+            id: cat.id ?? "",
             url: cat.url,
             breeds: cat.breeds,
-            isFavorite: viewStore.favorites.contains(cat.uuID)
+            isFavorite: viewStore.favorites.contains(cat.id ?? "")
         )
         return Store(
             initialState: initialState

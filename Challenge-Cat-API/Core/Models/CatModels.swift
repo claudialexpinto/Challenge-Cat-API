@@ -51,6 +51,7 @@ extension Cat {
             self.breeds = []
         }
     }
+
 }
 
 public struct CatBreed: Identifiable, Equatable, Decodable {

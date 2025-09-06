@@ -14,7 +14,7 @@ struct FavoritesView: View {
 
     var body: some View {
         WithViewStore(store, observe: { $0 }) { viewStore in
-            let catsToShow = viewStore.cats.filter { viewStore.favorites.contains($0.uuID) }
+            let catsToShow = viewStore.cats.filter { viewStore.favorites.contains($0.id ?? "") }
 
             NavigationStack {
                 VStack {
@@ -61,7 +61,7 @@ struct FavoritesView: View {
 
 extension FavoritesView {
     private func calculateAverageLifespan(for viewStore: ViewStore<CatListFeature.State, CatListFeature.Action>) -> Double {
-        let favCats = viewStore.cats.filter { viewStore.favorites.contains($0.uuID) }
+        let favCats = viewStore.cats.filter { viewStore.favorites.contains($0.id ?? "") }
         let lifespans = favCats.compactMap { $0.breeds?.first?.life_span }
         let numbers = lifespans.compactMap { span -> Double? in
             let digits = span.split(whereSeparator: { !$0.isNumber && $0 != "." })

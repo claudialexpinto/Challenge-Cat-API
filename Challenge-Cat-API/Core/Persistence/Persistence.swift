@@ -12,14 +12,13 @@ public protocol PersistenceControllerProtocol {
     func fetchCats() -> [Cat]
     func saveContext()
     func fetchFavoriteCats() -> [Cat]
-    func toggleFavorite(catUUID: UUID)
+    func toggleFavorite(catID: String)
 }
 
 final class PersistenceController: PersistenceControllerProtocol {
     static let shared = PersistenceController()
     
     let container: NSPersistentContainer
-    
     var context: NSManagedObjectContext { container.viewContext }
     
     init(inMemory: Bool = false) {
@@ -35,48 +34,73 @@ final class PersistenceController: PersistenceControllerProtocol {
     }
     
     func saveContext() {
-        let context = container.viewContext
         if context.hasChanges {
-            do {
-                try context.save()
-            } catch {
-                print("Failed to save context: \(error)")
-            }
+            try? context.save()
         }
     }
-
+    
     func fetchCats() -> [Cat] {
-        let context = container.viewContext
         let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \CatEntity.id, ascending: true)]
-        
-        do {
-            let entities = try context.fetch(request)
+        let entities = (try? context.fetch(request)) ?? []
+        return entities.map { Cat(entity: $0) }
+    }
+    
+    func fetchFavoriteCats() -> [Cat] {
+        let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "isFavorite == true")
+        let entities = (try? context.fetch(request)) ?? []
+        return entities.map { Cat(entity: $0) }
+    }
+    
+    func saveCats(_ cats: [Cat]) {
+        for cat in cats {
+            guard let apiID = cat.id else { continue }
             
-            return entities.map { entity in
-                var cat = Cat(
-                    id: entity.id,
-                    url: entity.url,
-                    width: Int(entity.width),
-                    height: Int(entity.height),
-                    breeds: [],
-                    uuID: entity.uuID ?? UUID()
-                )
-                
-                if let breedEntities = entity.breed as? Set<BreedEntity> {
-                    cat.breeds = breedEntities.map { CatBreed(entity: $0) }
-                } else {
-                    cat.breeds = []
-                }
-                
-                return cat
+            let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", apiID)
+            
+            let entity: CatEntity
+            if let existing = try? context.fetch(request).first {
+                entity = existing
+            } else {
+                entity = CatEntity(context: context)
+                entity.uuID = UUID()
             }
-        } catch {
-            print("❌ Failed to fetch cats: \(error)")
-            return []
+            
+            entity.id = apiID
+            entity.url = cat.url
+            entity.width = Int64(cat.width ?? 0)
+            entity.height = Int64(cat.height ?? 0)
+            
+            // Manter o isFavorite anterior se existir
+            if entity.isFavorite == false {
+                entity.isFavorite = cat.isFavorite
+            }
+            
+            // Atualizar breeds
+            entity.removeFromBreed(entity.breed ?? NSSet())
+            if let breeds = cat.breeds {
+                for breed in breeds {
+                    let breedEntity = breedEntity(for: breed, context: context)
+                    entity.addToBreed(breedEntity)
+                }
+            }
+        }
+        
+        saveContext()
+    }
+    
+    func toggleFavorite(catID: String) {
+        let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", catID)
+        
+        if let cat = try? context.fetch(request).first {
+            cat.isFavorite.toggle()
+            saveContext()
         }
     }
-
+    
     private func breedEntity(for breed: CatBreed, context: NSManagedObjectContext) -> BreedEntity {
         let request: NSFetchRequest<BreedEntity> = BreedEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", breed.id)
@@ -97,59 +121,5 @@ final class PersistenceController: PersistenceControllerProtocol {
         newBreed.weightImperial = breed.weight?.imperial
         newBreed.weightMetric = breed.weight?.metric
         return newBreed
-    }
-
-    func saveCats(_ cats: [Cat]) {
-        let context = container.viewContext
-
-        for cat in cats {
-            let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
-            request.predicate = NSPredicate(format: "uuID == %@", cat.uuID as CVarArg)
-            let entity: CatEntity
-            if let existing = try? context.fetch(request).first {
-                entity = existing
-            } else {
-                entity = CatEntity(context: context)
-            }
-
-            entity.id = cat.id ?? UUID().uuidString
-            entity.url = cat.url
-            entity.width = Int64(cat.width ?? 0)
-            entity.height = Int64(cat.height ?? 0)
-            entity.uuID = cat.uuID
-
-            // Atualizar breeds
-            entity.removeFromBreed(entity.breed ?? NSSet())
-            if let breeds = cat.breeds {
-                for breed in breeds {
-                    let breedEntity = breedEntity(for: breed, context: context)
-                    entity.addToBreed(breedEntity)
-                }
-            }
-        }
-
-        do {
-            try context.save()
-        } catch {
-            print("❌ Failed to save cats: \(error)")
-        }
-    }
-    
-    func toggleFavorite(catUUID: UUID) {
-        let context = container.viewContext
-        let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "uuID == %@", catUUID as CVarArg)
-        if let cat = try? context.fetch(request).first {
-            cat.isFavorite.toggle()
-            try? context.save()
-        }
-    }
-    
-    func fetchFavoriteCats() -> [Cat] {
-        let context = container.viewContext
-        let request: NSFetchRequest<CatEntity> = CatEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "isFavorite == true")
-        let entities = (try? context.fetch(request)) ?? []
-        return entities.map { Cat(entity: $0) }
     }
 }

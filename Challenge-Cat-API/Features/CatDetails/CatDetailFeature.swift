@@ -11,7 +11,8 @@ import Foundation
 
 public struct CatDetailFeature: Reducer {
     public struct State: Equatable {
-        let id: UUID
+        let uuid: UUID
+        let id: String
         let url: String?
         var breeds: [CatBreed]?
         var isFavorite: Bool
