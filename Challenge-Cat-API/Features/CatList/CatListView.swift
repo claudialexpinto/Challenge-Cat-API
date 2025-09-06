@@ -37,13 +37,24 @@ struct CatListView: View {
                     )
                 .onAppear { viewStore.send(.onAppear) }
                 .alert(store: store.scope(state: \.$alert, action: CatListFeature.Action.alert))
-                .navigationDestination(
+                .fullScreenCover(
                     store: store.scope(
                         state: \.$selectedCat,
                         action: CatListFeature.Action.selectedCat
-                    )
+                    ),
+                    onDismiss: { viewStore.send(.selectedCat(.dismiss)) }
                 ) { detailStore in
-                    CatDetailView(store: detailStore)
+                    NavigationStack {
+                            CatDetailView(store: detailStore)
+                                .toolbar {
+                                    ToolbarItem(placement: .cancellationAction) {
+                                        Button("Close") {
+                                            viewStore.send(.selectedCat(.dismiss))
+                                        }
+                                    }
+                                }
+                        }
+                    .accentColor(.teal)
                 }
             }
         }

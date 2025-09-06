@@ -15,7 +15,6 @@ struct CatDetailView: View {
         WithViewStore(self.store, observe: { $0 }) { viewStore in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // imagem com fallback robusto
                     if let urlString = viewStore.url, let url = URL(string: urlString) {
                         AsyncImage(url: url) { phase in
                             switch phase {
@@ -115,6 +114,7 @@ struct CatDetailView: View {
                 .padding()
             }
             .navigationTitle("Breed Details")
+            .accentColor(.teal)
             .alert(store: store.scope(state: \.$alert, action: CatDetailFeature.Action.alert))
         }
     }
