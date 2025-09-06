@@ -38,6 +38,7 @@ public struct CatListFeature: Reducer {
         case loadMore
         
         case catsResponse([Cat])
+        case retryLoad
         case failedToLoad(String)
         case errorDismissed
         
@@ -124,16 +125,35 @@ public struct CatListFeature: Reducer {
                 state.canLoadMore = !cats.isEmpty
                 return .none
                 
+            case .retryLoad:
+                state.currentPage = 1
+                    state.isLoading = true
+                    let api = environment.apiClient
+                    let persistence = environment.persistenceController
+                    let limit = environment.pageSize
+                    return .run { send in
+                        do {
+                            let cats = try await api.fetchCats(page: 1, limit: limit)
+                            persistence.saveCats(cats)
+                            await send(.catsResponse(cats))
+                        } catch {
+                            await send(.failedToLoad(error.localizedDescription))
+                        }
+                    }
+                
             case let .failedToLoad(message):
                 state.isLoading = false
+                state.isLoadingMore = false
                 state.alert = AlertState(
                     title: { TextState("Error") },
                     actions: {
-                        ButtonState(action: .send(.errorDismissed), label: { TextState("OK") })
+                        ButtonState(action: .send(.retryLoad), label: { TextState("Retry") })
+                        ButtonState(action: .send(.errorDismissed), label: { TextState("Cancel") })
                     },
                     message: { TextState(message) }
                 )
                 return .none
+
                 
             case .alert(.presented(.errorDismissed)):
                 state.alert = nil
