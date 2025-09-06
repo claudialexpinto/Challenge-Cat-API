@@ -30,7 +30,15 @@ protocol CatAPIClientProtocol {
 
 struct CatAPIClient: CatAPIClientProtocol {
     private let baseURL = "https://api.thecatapi.com/v1/images/search"
-    private let apiKey = "live_v9gRBvb9sM9PR0BuSczkOGUGTPNrs3bCcIMdKyiMi3ge1CT0ZHpPPAd46JuKlde1"
+    
+    static var apiKey: String {
+        guard let path = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path) as? [String: Any],
+              let key = dict["THECATAPI_KEY"] as? String else {
+            fatalError("API key não encontrada")
+        }
+        return key
+    }
     
     func fetchCats(page: Int, limit: Int) async throws -> [Cat] {
         guard var components = URLComponents(string: baseURL) else {
@@ -49,7 +57,7 @@ struct CatAPIClient: CatAPIClientProtocol {
         }
         
         var request = URLRequest(url: url)
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(CatAPIClient.apiKey, forHTTPHeaderField: "x-api-key")
         
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
