@@ -52,9 +52,11 @@ extension FavoritesView {
         let favCats = viewStore.cats.filter { viewStore.favorites.contains($0.uuID) }
         let lifespans = favCats.compactMap { $0.breeds?.first?.life_span }
         let numbers = lifespans.compactMap { span -> Double? in
-            let parts = span.split(separator: "-").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            guard let min = parts.first.flatMap(Double.init), let max = parts.last.flatMap(Double.init) else { return nil }
-            return (min + max) / 2
+            let digits = span.split(whereSeparator: { !$0.isNumber && $0 != "." })
+            let parsed = digits.compactMap { Double($0) }
+            if parsed.isEmpty { return nil }
+            if parsed.count == 1 { return parsed.first }
+            return (parsed.first! + parsed.last!) / 2
         }
         guard !numbers.isEmpty else { return 0 }
         return numbers.reduce(0, +) / Double(numbers.count)
